@@ -7,15 +7,15 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
       {/* Navigation */}
-      <nav className="border-b border-border/50 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
+      <nav className="border-b border-border/50 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="font-bold text-xl">Vestial</span>
-            </div>
+            </Link>
             <div className="hidden md:flex items-center gap-8">
               <Link href="#features" className="text-sm hover:text-primary transition">
                 Features
@@ -26,6 +26,23 @@ export default function Home() {
               <Link href="/about" className="text-sm hover:text-primary transition">
                 About
               </Link>
+              <div className="flex items-center gap-3 border-l border-border/50 pl-8">
+                <Link href="/search">
+                  <Button variant="ghost" size="sm">
+                    Search
+                  </Button>
+                </Link>
+                <Link href="/compare">
+                  <Button variant="ghost" size="sm">
+                    Compare
+                  </Button>
+                </Link>
+                <Link href="/watchlist">
+                  <Button variant="ghost" size="sm">
+                    Watchlist
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
