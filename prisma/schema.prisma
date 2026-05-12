@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CompanyCache {
+  id        String   @id @default(cuid())
+  symbol    String   @unique
+  name      String
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime
+
+  @@index([symbol])
+  @@index([expiresAt])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  watchlist WatchlistItem[]
+
+  @@index([email])
+}
+
+model WatchlistItem {
+  id        String   @id @default(cuid())
+  symbol    String
+  name      String
+  userId    String?
+  price     Float
+  change    Float
+  changePercent Float
+  addedAt   DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol])
+  @@index([userId])
+  @@index([symbol])
+}
+
+model ComparisonHistory {
+  id        String   @id @default(cuid())
+  symbol1   String
+  symbol2   String
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([symbol1, symbol2])
+}
