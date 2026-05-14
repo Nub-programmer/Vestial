@@ -1,6 +1,6 @@
 import { MarketData } from '@/lib/types'
 
-// Finnhub API helper for market data
+// Pulls market stats for a symbol from Finnhub.
 export async function getMarketData(symbol: string): Promise<MarketData> {
   const apiKey = process.env.FINNHUB_API_KEY
   if (!apiKey) {
@@ -8,10 +8,10 @@ export async function getMarketData(symbol: string): Promise<MarketData> {
   }
 
   try {
-    // Fetch quote data
+    // Quick quote data (price, change, volume).
     const quoteRes = await fetch(
       `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`,
-      { next: { revalidate: 300 } } // Cache for 5 minutes
+      { next: { revalidate: 300 } } // Revalidate every 5 min.
     )
 
     if (!quoteRes.ok) {
@@ -20,10 +20,10 @@ export async function getMarketData(symbol: string): Promise<MarketData> {
 
     const quote = await quoteRes.json()
 
-    // Fetch company data for 52-week high/low
+    // Extra profile info for market cap and related fields.
     const companyRes = await fetch(
       `https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${apiKey}`,
-      { next: { revalidate: 3600 } } // Cache for 1 hour
+      { next: { revalidate: 3600 } } // Revalidate every hour.
     )
 
     const company = companyRes.ok ? await companyRes.json() : {}
@@ -48,7 +48,7 @@ export async function getMarketData(symbol: string): Promise<MarketData> {
   }
 }
 
-// Mock fallback for testing
+// Lightweight fallback so UI still works without API data.
 export function getMockMarketData(symbol: string, name: string): MarketData {
   const basePrice = 100 + Math.random() * 200
   const change = (Math.random() - 0.5) * 10
