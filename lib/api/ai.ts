@@ -121,7 +121,7 @@ Identify 2-3 realistic risks and 2-3 opportunities based on the sector and curre
     const responseText =
       message.content[0].type === 'text' ? message.content[0].text : '{}'
 
-    // Extract JSON from response
+    // Pull out the JSON block if the model wraps it in extra text.
     const jsonMatch = responseText.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0])

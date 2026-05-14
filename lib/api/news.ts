@@ -15,7 +15,7 @@ export async function getNews(
       `https://newsapi.org/v2/everything?q=${encodeURIComponent(
         company
       )}&sortBy=publishedAt&language=en&pageSize=${limit}&apiKey=${apiKey}`,
-      { next: { revalidate: 600 } } // Cache for 10 minutes
+      { next: { revalidate: 600 } } // Revalidate every 10 min.
     )
 
     if (!response.ok) {
