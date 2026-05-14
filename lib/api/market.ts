@@ -49,7 +49,7 @@ export async function getMarketData(symbol: string): Promise<MarketData> {
 }
 
 // Lightweight fallback so UI still works without API data.
-export function getMockMarketData(symbol: string, name: string): MarketData {
+export function getMockMarketData(_symbol: string, _name: string): MarketData {
   const basePrice = 100 + Math.random() * 200
   const change = (Math.random() - 0.5) * 10
   const changePercent = (change / basePrice) * 100

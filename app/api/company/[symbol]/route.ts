@@ -6,7 +6,12 @@ import {
   generateEasyExplanation,
   generateRisksAndOpportunities,
 } from '@/lib/api/ai'
-import type { CompanyBrief, CompanyOverview } from '@/lib/types'
+import type {
+  CompanyBrief,
+  CompanyOverview,
+  RiskFactor,
+  Opportunity,
+} from '@/lib/types'
 
 // Starter catalog so the route can respond without a symbol lookup service.
 const MOCK_COMPANIES: Record<string, CompanyOverview> = {
@@ -88,8 +93,8 @@ export async function GET(
     // Build AI summary blocks used by the brief UI.
     let aiSummary = ''
     let easyExplanation = ''
-    let risks = []
-    let opportunities = []
+    let risks: RiskFactor[] = []
+    let opportunities: Opportunity[] = []
     let bullishFactors = []
     let bearishFactors = []
 

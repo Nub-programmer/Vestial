@@ -1,5 +1,11 @@
 import Groq from 'groq-sdk'
-import { CompanyOverview, MarketData, NewsArticle } from '@/lib/types'
+import {
+  CompanyOverview,
+  MarketData,
+  NewsArticle,
+  RiskFactor,
+  Opportunity,
+} from '@/lib/types'
 
 async function initializeGroq() {
   const apiKey = process.env.GROQ_API_KEY
@@ -9,14 +15,30 @@ async function initializeGroq() {
   return new Groq({ apiKey })
 }
 
+async function requestGroqText(prompt: string, maxTokens: number): Promise<string> {
+  const groq = await initializeGroq()
+
+  const completion = await groq.chat.completions.create({
+    model: 'mixtral-8x7b-32768',
+    max_tokens: maxTokens,
+    messages: [
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+  })
+
+  const content = completion.choices?.[0]?.message?.content
+  return typeof content === 'string' ? content : ''
+}
+
 export async function generateCompanyBrief(
   company: CompanyOverview,
   marketData: MarketData,
   news: NewsArticle[]
 ): Promise<string> {
   try {
-    const groq = await initializeGroq()
-
     const newsContext = news
       .slice(0, 5)
       .map((n) => `- ${n.title}`)
@@ -34,18 +56,7 @@ ${newsContext}
 
 Generate a 2-3 sentence professional summary highlighting key aspects. Focus on investment relevance and current market context.`
 
-    const message = await groq.messages.create({
-      model: 'mixtral-8x7b-32768',
-      max_tokens: 200,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    })
-
-    return message.content[0].type === 'text' ? message.content[0].text : ''
+    return await requestGroqText(prompt, 200)
   } catch (error) {
     console.error('Error generating brief:', error)
     return getMockBrief(company)
@@ -57,25 +68,12 @@ export async function generateEasyExplanation(
   briefContext: string
 ): Promise<string> {
   try {
-    const groq = await initializeGroq()
-
     const prompt = `Explain ${company.name} in simple terms a 15-year-old could understand. 
 Use this context: ${briefContext}
 
 Keep it to 2-3 sentences. Avoid jargon. Focus on what they do and why it matters.`
 
-    const message = await groq.messages.create({
-      model: 'mixtral-8x7b-32768',
-      max_tokens: 150,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    })
-
-    return message.content[0].type === 'text' ? message.content[0].text : ''
+    return await requestGroqText(prompt, 150)
   } catch (error) {
     console.error('Error generating explanation:', error)
     return getMockExplanation(company)
@@ -84,15 +82,13 @@ Keep it to 2-3 sentences. Avoid jargon. Focus on what they do and why it matters
 
 export async function generateRisksAndOpportunities(
   company: CompanyOverview,
-  marketData: MarketData,
-  news: NewsArticle[]
+  _marketData: MarketData,
+  _news: NewsArticle[]
 ): Promise<{
-  risks: Array<{ title: string; description: string; severity: string }>
-  opportunities: Array<{ title: string; description: string; potential: string }>
+  risks: RiskFactor[]
+  opportunities: Opportunity[]
 }> {
   try {
-    const groq = await initializeGroq()
-
     const prompt = `For ${company.name} (${company.symbol}), identify key risks and opportunities.
 
 Return ONLY valid JSON (no markdown, no extra text) with this exact structure:
@@ -107,19 +103,7 @@ Return ONLY valid JSON (no markdown, no extra text) with this exact structure:
 
 Identify 2-3 realistic risks and 2-3 opportunities based on the sector and current context.`
 
-    const message = await groq.messages.create({
-      model: 'mixtral-8x7b-32768',
-      max_tokens: 400,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    })
-
-    const responseText =
-      message.content[0].type === 'text' ? message.content[0].text : '{}'
+    const responseText = await requestGroqText(prompt, 400)
 
     // Pull out the JSON block if the model wraps it in extra text.
     const jsonMatch = responseText.match(/\{[\s\S]*\}/)
@@ -127,10 +111,10 @@ Identify 2-3 realistic risks and 2-3 opportunities based on the sector and curre
       return JSON.parse(jsonMatch[0])
     }
 
-    return getMockRisksAndOpportunities(company)
+    return getMockRisksAndOpportunities()
   } catch (error) {
     console.error('Error generating risks and opportunities:', error)
-    return getMockRisksAndOpportunities(company)
+    return getMockRisksAndOpportunities()
   }
 }
 
@@ -143,8 +127,8 @@ function getMockExplanation(company: CompanyOverview): string {
 }
 
 function getMockRisksAndOpportunities(): {
-  risks: Array<{ title: string; description: string; severity: string }>
-  opportunities: Array<{ title: string; description: string; potential: string }>
+  risks: RiskFactor[]
+  opportunities: Opportunity[]
 } {
   return {
     risks: [
