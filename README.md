@@ -4,7 +4,7 @@
 
 Vestial helps you go from a company name or ticker to a clean, source-backed brief with market data, news, risks, opportunities, and beginner-friendly explanations.
 
-![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma)
@@ -46,7 +46,7 @@ The goal is to make company research fast, clear, and useful for both beginners 
 ## Tech Stack
 
 **Frontend**
-- Next.js 15 (App Router)
+- Next.js 14 (App Router)
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
