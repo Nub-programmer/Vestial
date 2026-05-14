@@ -18,14 +18,13 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     /* Path mapping */
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
