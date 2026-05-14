@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
-      {/* Navigation */}
+      {/* Top nav */}
       <nav className="border-b border-border/50 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -48,7 +48,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero */}
       <section className="relative px-4 sm:px-6 lg:px-8 pt-20 pb-24">
         <div className="mx-auto max-w-7xl">
           <div className="text-center space-y-8">
@@ -80,7 +80,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Feature highlights */}
       <section id="features" className="px-4 sm:px-6 lg:px-8 py-24 bg-card/50">
         <div className="mx-auto max-w-7xl">
           <h2 className="text-4xl font-bold text-center mb-16">Powerful Features</h2>
@@ -119,7 +119,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA */}
       <section className="px-4 sm:px-6 lg:px-8 py-24">
         <div className="mx-auto max-w-4xl text-center space-y-8 bg-gradient-to-r from-primary/10 to-primary/5 p-12 rounded-lg border border-primary/20">
           <h2 className="text-3xl font-bold">Ready to Explore?</h2>
