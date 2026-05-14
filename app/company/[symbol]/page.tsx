@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -319,11 +320,15 @@ export default function CompanyBriefPage() {
                 <CardContent className="p-6">
                   <div className="flex gap-4">
                     {article.image && (
-                      <img
-                        src={article.image}
-                        alt=""
-                        className="w-24 h-24 rounded-lg object-cover flex-shrink-0"
-                      />
+                      <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg">
+                        <Image
+                          src={article.image}
+                          alt=""
+                          fill
+                          unoptimized
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <div className="flex-1">
                       <a href={article.url} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition">
@@ -351,7 +356,7 @@ export default function CompanyBriefPage() {
           <TabsContent value="explained">
             <Card>
               <CardHeader>
-                <CardTitle>Explain Like I'm 15</CardTitle>
+                <CardTitle>Explain Like I&apos;m 15</CardTitle>
                 <CardDescription>A beginner-friendly explanation of this company</CardDescription>
               </CardHeader>
               <CardContent className="prose prose-invert max-w-none">
