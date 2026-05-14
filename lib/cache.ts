@@ -1,16 +1,12 @@
 export type CacheEntry<T> = {
   data: T
   timestamp: number
-  ttl: number // in milliseconds
+  ttl: number // ms until this entry expires
 }
 
 const cache = new Map<string, CacheEntry<any>>()
 
-/**
- * Get value from in-memory cache
- * @param key Cache key
- * @returns Cached value or null if expired/not found
- */
+// Returns cached data if it's still fresh.
 export function getCacheValue<T>(key: string): T | null {
   const entry = cache.get(key) as CacheEntry<T> | undefined
   if (!entry) return null
@@ -24,12 +20,7 @@ export function getCacheValue<T>(key: string): T | null {
   return entry.data
 }
 
-/**
- * Set value in in-memory cache
- * @param key Cache key
- * @param data Data to cache
- * @param ttl Time to live in milliseconds (default: 5 minutes)
- */
+// Stores data with a TTL so old entries naturally drop off.
 export function setCacheValue<T>(
   key: string,
   data: T,
@@ -42,23 +33,17 @@ export function setCacheValue<T>(
   })
 }
 
-/**
- * Clear specific cache entry
- */
+// Removes one cache key.
 export function clearCacheEntry(key: string): void {
   cache.delete(key)
 }
 
-/**
- * Clear all cache
- */
+// Clears everything in the in-memory cache.
 export function clearAllCache(): void {
   cache.clear()
 }
 
-/**
- * Helper to cache async operations
- */
+// Wraps an async fetcher and caches the result by key.
 export async function withCache<T>(
   key: string,
   fetcher: () => Promise<T>,
