@@ -11,7 +11,7 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
-      {/* Navigation */}
+      {/* Back nav */}
       <nav className="border-b border-border/50 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
           <Link href="/" className="font-bold text-xl hover:text-primary transition">
@@ -20,9 +20,9 @@ export default function AboutPage() {
         </div>
       </nav>
 
-      {/* Main Content */}
+      {/* Main content */}
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-16">
-        {/* Hero */}
+        {/* Intro */}
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold mb-4">About Vestial</h1>
           <p className="text-xl text-muted-foreground">
@@ -30,7 +30,7 @@ export default function AboutPage() {
           </p>
         </div>
 
-        {/* Mission Section */}
+        {/* Mission */}
         <Card className="mb-12">
           <CardHeader>
             <CardTitle className="text-2xl">Our Mission</CardTitle>
@@ -49,7 +49,7 @@ export default function AboutPage() {
           </CardContent>
         </Card>
 
-        {/* How It Works */}
+        {/* How it works */}
         <div className="mb-12">
           <h2 className="text-3xl font-bold mb-8">How It Works</h2>
           <div className="grid md:grid-cols-3 gap-6">
@@ -86,7 +86,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Data Sources */}
+        {/* Data sources */}
         <Card className="mb-12">
           <CardHeader>
             <CardTitle className="text-2xl">Our Data Sources</CardTitle>
@@ -146,7 +146,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Technology */}
+        {/* Tech stack overview */}
         <Card className="mb-12">
           <CardHeader>
             <CardTitle className="text-2xl">Built With Modern Tech</CardTitle>
