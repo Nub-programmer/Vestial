@@ -37,7 +37,7 @@ export default function AboutPage() {
           </CardHeader>
           <CardContent className="space-y-4 prose prose-invert max-w-none">
             <p>
-              Vestial exists to democratize company intelligence. Whether you're a student learning about
+              Vestial exists to democratize company intelligence. Whether you&apos;re a student learning about
               finance, an investor researching opportunities, or someone curious about companies, our platform
               removes barriers to understanding.
             </p>
@@ -109,7 +109,7 @@ export default function AboutPage() {
               <div>
                 <h3 className="font-semibold mb-2">AI Analysis</h3>
                 <p className="text-muted-foreground">
-                  Smart summaries and beginner explanations powered by Groq's AI models
+                  Smart summaries and beginner explanations powered by Groq&apos;s AI models
                 </p>
               </div>
               <div>
