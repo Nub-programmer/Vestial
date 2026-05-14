@@ -106,7 +106,7 @@ export default function ComparePage() {
             </Badge>
           </div>
 
-          {/* Key Metrics */}
+          {/* Key metrics */}
           <div className="space-y-3 border-t border-border/50 pt-6">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Market Cap</span>
@@ -144,7 +144,7 @@ export default function ComparePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
-      {/* Header */}
+      {/* Page heading */}
       <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6">
           <h1 className="text-3xl font-bold mb-2">Compare Companies</h1>
@@ -154,7 +154,7 @@ export default function ComparePage() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main content */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
         {error && (
           <div className="mb-6 p-4 rounded-lg bg-red-600/10 border border-red-600/30 text-red-600">
@@ -163,7 +163,7 @@ export default function ComparePage() {
         )}
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {/* Company 1 */}
+          {/* Left company */}
           <div>
             <CompanyCard
               brief={company1}
@@ -176,7 +176,7 @@ export default function ComparePage() {
             />
           </div>
 
-          {/* VS */}
+          {/* VS marker */}
           <div className="flex items-center justify-center">
             <div className="text-center space-y-2">
               <ArrowLeftRight className="w-8 h-8 text-muted-foreground mx-auto" />
@@ -184,7 +184,7 @@ export default function ComparePage() {
             </div>
           </div>
 
-          {/* Company 2 */}
+          {/* Right company */}
           <div>
             <CompanyCard
               brief={company2}
@@ -198,12 +198,12 @@ export default function ComparePage() {
           </div>
         </div>
 
-        {/* Detailed Comparison */}
+        {/* Detailed comparison table */}
         {company1 && company2 && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Detailed Comparison</h2>
 
-            {/* Market Metrics */}
+            {/* Market metrics */}
             <Card>
               <CardHeader>
                 <CardTitle>Market Metrics</CardTitle>
@@ -244,7 +244,7 @@ export default function ComparePage() {
               </CardContent>
             </Card>
 
-            {/* Company Info */}
+            {/* Company profile fields */}
             <Card>
               <CardHeader>
                 <CardTitle>Company Information</CardTitle>
