@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, TrendingUp, Zap, BarChart3 } from 'lucide-react'
-import { motion } from 'framer-motion'
 
 export default function Home() {
   return (

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TrendingUp, TrendingDown, BookOpen, AlertTriangle, Lightbulb } from 'lucide-react'
-import type { CompanyBrief, RiskFactor, Opportunity } from '@/lib/types'
+import type { CompanyBrief } from '@/lib/types'
 
 interface CompanyBriefPageProps {
   params: {
@@ -352,7 +352,7 @@ export default function CompanyBriefPage() {
             ))}
           </TabsContent>
 
-          {/* Explain-like-I'm-15 tab */}
+          {/* Explain-like-15 tab */}
           <TabsContent value="explained">
             <Card>
               <CardHeader>
