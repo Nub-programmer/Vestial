@@ -18,6 +18,19 @@ const POPULAR_COMPANIES = [
 
 const RECENT_SEARCHES = ['NVDA', 'TSLA', 'MSFT', 'AAPL'] // In production this should come from localStorage.
 
+const NAME_TO_TICKER: Record<string, string> = {
+  nvidia: 'NVDA',
+  nvdia: 'NVDA',
+  nvidiA: 'NVDA',
+  apple: 'AAPL',
+  microsoft: 'MSFT',
+  tesla: 'TSLA',
+  google: 'GOOGL',
+  alphabet: 'GOOGL',
+  amazon: 'AMZN',
+  meta: 'META',
+}
+
 export default function SearchPage() {
   const router = useRouter()
   const [query, setQuery] = useState('')
@@ -29,8 +42,13 @@ export default function SearchPage() {
 
       setIsLoading(true)
       try {
+        // Normalize name -> ticker for common inputs, otherwise assume ticker
+        const cleaned = searchQuery.trim().toLowerCase()
+        const mapped = NAME_TO_TICKER[cleaned]
+        const target = mapped ?? searchQuery.trim().toUpperCase()
+
         // Route straight to the company brief page.
-        router.push(`/company/${searchQuery.toUpperCase()}`)
+        router.push(`/company/${encodeURIComponent(target)}`)
       } catch (error) {
         console.error('Search error:', error)
       } finally {
