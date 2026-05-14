@@ -82,7 +82,7 @@ export default function CompanyBriefPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
-      {/* Header */}
+      {/* Sticky top summary */}
       <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-start justify-between mb-4">
@@ -98,7 +98,7 @@ export default function CompanyBriefPage() {
             </Button>
           </div>
 
-          {/* Price Card */}
+          {/* Quick market snapshot */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="bg-card/50">
               <CardContent className="pt-6">
@@ -133,7 +133,7 @@ export default function CompanyBriefPage() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main tabs */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="w-full justify-start">
@@ -143,9 +143,9 @@ export default function CompanyBriefPage() {
             <TabsTrigger value="explained">Explained</TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
+          {/* Overview tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* AI Summary */}
+            {/* AI summary */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -158,7 +158,7 @@ export default function CompanyBriefPage() {
               </CardContent>
             </Card>
 
-            {/* Key Metrics */}
+            {/* Core metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
@@ -223,7 +223,7 @@ export default function CompanyBriefPage() {
               </Card>
             </div>
 
-            {/* Bullish & Bearish Factors */}
+            {/* Bullish vs bearish factors */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="border-green-600/30 bg-green-600/5">
                 <CardHeader>
@@ -265,7 +265,7 @@ export default function CompanyBriefPage() {
             </div>
           </TabsContent>
 
-          {/* Analysis Tab */}
+          {/* Analysis tab */}
           <TabsContent value="analysis" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Risks */}
@@ -312,7 +312,7 @@ export default function CompanyBriefPage() {
             </div>
           </TabsContent>
 
-          {/* News Tab */}
+          {/* News tab */}
           <TabsContent value="news" className="space-y-4">
             {brief.news.map((article) => (
               <Card key={article.id} className="hover:bg-card/80 transition">
@@ -347,7 +347,7 @@ export default function CompanyBriefPage() {
             ))}
           </TabsContent>
 
-          {/* Explained Tab */}
+          {/* Explain-like-I'm-15 tab */}
           <TabsContent value="explained">
             <Card>
               <CardHeader>
