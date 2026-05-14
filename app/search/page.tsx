@@ -17,7 +17,7 @@ const POPULAR_COMPANIES = [
   { name: 'Meta', symbol: 'META', sector: 'Technology' },
 ]
 
-const RECENT_SEARCHES = ['NVDA', 'TSLA', 'MSFT', 'AAPL'] // Would come from localStorage
+const RECENT_SEARCHES = ['NVDA', 'TSLA', 'MSFT', 'AAPL'] // In production this should come from localStorage.
 
 export default function SearchPage() {
   const router = useRouter()
@@ -30,7 +30,7 @@ export default function SearchPage() {
 
       setIsLoading(true)
       try {
-        // Navigate to company brief page
+        // Route straight to the company brief page.
         router.push(`/company/${searchQuery.toUpperCase()}`)
       } catch (error) {
         console.error('Search error:', error)
@@ -48,7 +48,7 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
-      {/* Header */}
+      {/* Top heading */}
       <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6">
           <h1 className="text-2xl font-bold mb-2">Search Companies</h1>
@@ -58,9 +58,9 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main content */}
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Search Input */}
+        {/* Search input */}
         <form onSubmit={handleSubmit} className="mb-12">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -81,7 +81,7 @@ export default function SearchPage() {
           </div>
         </form>
 
-        {/* Popular Companies */}
+        {/* Popular companies */}
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-5 h-5 text-primary" />
@@ -110,7 +110,7 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* Recent Searches */}
+        {/* Recent searches */}
         {RECENT_SEARCHES.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-4">
