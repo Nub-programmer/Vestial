@@ -40,7 +40,7 @@ export default function WatchlistPage() {
   const [totalGain, setTotalGain] = useState(0)
 
   useEffect(() => {
-    // Calculate total gain percentage
+    // Quick aggregate so the summary cards stay in sync.
     const totalChange = watchlist.reduce((sum, item) => sum + item.change * item.currentPrice, 0)
     const totalValue = watchlist.reduce((sum, item) => sum + item.currentPrice, 0)
     const totalPercent = totalValue > 0 ? (totalChange / totalValue) * 100 : 0
@@ -73,7 +73,7 @@ export default function WatchlistPage() {
             </Link>
           </div>
 
-          {/* Summary */}
+          {/* Summary cards */}
           {watchlist.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-card/50">
@@ -112,7 +112,7 @@ export default function WatchlistPage() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main content */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
         {watchlist.length === 0 ? (
           <Card>
