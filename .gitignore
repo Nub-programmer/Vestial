@@ -39,3 +39,5 @@ generated/
 *.swp
 *.swo
 *~
+
+*.tsbuildinfo
