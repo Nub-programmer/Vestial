@@ -11,12 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TrendingUp, TrendingDown, BookOpen, AlertTriangle, Lightbulb } from 'lucide-react'
 import type { CompanyBrief } from '@/lib/types'
 
-interface CompanyBriefPageProps {
-  params: {
-    symbol: string
-  }
-}
-
 export default function CompanyBriefPage() {
   const params = useParams()
   const symbol = params?.symbol as string
