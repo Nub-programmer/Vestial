@@ -8,7 +8,7 @@ import {
 } from '@/lib/api/ai'
 import type { CompanyBrief, CompanyOverview } from '@/lib/types'
 
-// Mock company data
+// Starter catalog so the route can respond without a symbol lookup service.
 const MOCK_COMPANIES: Record<string, CompanyOverview> = {
   AAPL: {
     symbol: 'AAPL',
@@ -63,17 +63,17 @@ export async function GET(
   try {
     const symbol = (params.symbol as string).toUpperCase()
 
-    // Get company overview
+    // Look up a base profile for the requested ticker.
     const overview = MOCK_COMPANIES[symbol]
     if (!overview) {
-      // Try to fetch from API if not in mock data
+      // Not in our local catalog yet.
       return NextResponse.json(
         { error: 'Company not found' },
         { status: 404 }
       )
     }
 
-    // Fetch market data
+    // Pull live market data, then fall back if the provider fails.
     let marketData
     try {
       marketData = await getMarketData(symbol)
@@ -82,10 +82,10 @@ export async function GET(
       marketData = getMockMarketData(symbol, overview.name)
     }
 
-    // Fetch news
+    // Recent news gives context for sentiment and summary generation.
     const news = await getNews(overview.name, 15)
 
-    // Generate AI content
+    // Build AI summary blocks used by the brief UI.
     let aiSummary = ''
     let easyExplanation = ''
     let risks = []
@@ -105,7 +105,7 @@ export async function GET(
       risks = analysisResult.risks
       opportunities = analysisResult.opportunities
 
-      // Generate factors based on market data
+      // Keep factors deterministic so we can show something useful every time.
       bullishFactors = [
         marketData.price > marketData.low52Week * 1.2
           ? 'Trading well above 52-week low'
@@ -151,14 +151,15 @@ export async function GET(
       ]
     }
 
-    // Determine sentiment
-    const positiveFactor = [
+    // Simple sentiment score from price action plus factor balance.
+    const positiveSignals = [
       marketData.changePercent > 0,
       marketData.price > marketData.high52Week * 0.9,
       bullishFactors.length > bearishFactors.length,
     ].filter(Boolean).length
 
-    const sentiment = positiveFactor >= 2 ? 'bullish' : positiveFactor === 1 ? 'neutral' : 'bearish'
+    const sentiment =
+      positiveSignals >= 2 ? 'bullish' : positiveSignals === 1 ? 'neutral' : 'bearish'
 
     const brief: CompanyBrief = {
       symbol,
