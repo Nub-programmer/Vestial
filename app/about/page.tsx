@@ -4,29 +4,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CheckCircle, Zap, Globe } from 'lucide-react'
 
 export const metadata = {
-  title: 'About Vestial',
-  description: 'Learn about Vestial and how we provide AI-powered company intelligence',
+  title: 'About',
+  description: 'Learn how the platform delivers clear company intelligence with live market and news data.',
 }
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
-      {/* Back nav */}
-      <nav className="border-b border-border/50 backdrop-blur-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
-          <Link href="/" className="font-bold text-xl hover:text-primary transition">
-            ← Back to Home
-          </Link>
-        </div>
-      </nav>
-
       {/* Main content */}
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-16">
         {/* Intro */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4">About Vestial</h1>
+          <h1 className="text-5xl font-bold mb-4">About The Product</h1>
           <p className="text-xl text-muted-foreground">
-            Making company research instant, actionable, and accessible to everyone
+            Designed to make company research clear, current, and faster to act on.
           </p>
         </div>
 
@@ -42,7 +33,7 @@ export default function AboutPage() {
               removes barriers to understanding.
             </p>
             <p>
-              Instead of spending hours reading financial documents or news articles, Vestial delivers clean,
+              Instead of spending hours reading fragmented documents and feeds, the app delivers clean,
               source-backed insights in minutes. We combine real-time market data, current news, and AI analysis
               to create the clearest possible picture of any company.
             </p>
@@ -150,14 +141,14 @@ export default function AboutPage() {
         <Card className="mb-12">
           <CardHeader>
             <CardTitle className="text-2xl">Built With Modern Tech</CardTitle>
-            <CardDescription>Vestial is built on a foundation of industry-leading tools</CardDescription>
+            <CardDescription>Built on stable tools for reliable production deployment</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <h3 className="font-semibold mb-2">Frontend</h3>
                 <p className="text-sm text-muted-foreground">
-                  Next.js 15, React, TypeScript, Tailwind CSS, shadcn/ui, and Framer Motion for beautiful, fast interfaces
+                  Next.js 14, React 18, TypeScript, Tailwind CSS, and Framer Motion for fast, polished interfaces
                 </p>
               </div>
               <div>
@@ -186,21 +177,13 @@ export default function AboutPage() {
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-12 rounded-lg border border-primary/20 text-center">
           <h2 className="text-2xl font-bold mb-4">Ready to explore?</h2>
           <p className="text-muted-foreground mb-6">
-            Start searching for companies and get instant AI-powered insights
+            Search a company and get a concise, source-backed brief in seconds.
           </p>
           <Link href="/search">
             <Button size="lg">Start Searching</Button>
           </Link>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="border-t border-border/50 px-4 sm:px-6 lg:px-8 py-12 text-center text-sm text-muted-foreground mt-16">
-        <p>© 2024 Vestial. A portfolio project by a passionate developer.</p>
-        <p className="mt-2">
-          Data powered by Finnhub, NewsAPI, and Groq. Deployed on Vercel.
-        </p>
-      </footer>
     </div>
   )
 }
