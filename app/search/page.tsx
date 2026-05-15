@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Search, TrendingUp, Clock } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Search, TrendingUp, Clock, ArrowUpRight, CircleAlert } from 'lucide-react'
+import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 
 const POPULAR_COMPANIES = [
   { name: 'Apple', symbol: 'AAPL', sector: 'Technology' },
@@ -16,52 +19,92 @@ const POPULAR_COMPANIES = [
   { name: 'Meta', symbol: 'META', sector: 'Technology' },
 ]
 
-const RECENT_SEARCHES = ['NVDA', 'TSLA', 'MSFT', 'AAPL'] // In production this should come from localStorage.
-
-const NAME_TO_TICKER: Record<string, string> = {
-  nvidia: 'NVDA',
-  nvdia: 'NVDA',
-  nvidiA: 'NVDA',
-  apple: 'AAPL',
-  microsoft: 'MSFT',
-  tesla: 'TSLA',
-  google: 'GOOGL',
-  alphabet: 'GOOGL',
-  amazon: 'AMZN',
-  meta: 'META',
+type SearchSuggestion = {
+  symbol: string
+  name: string
+  source: 'live' | 'local'
 }
 
 export default function SearchPage() {
   const router = useRouter()
   const [query, setQuery] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false)
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
+  const [recentSearches, setRecentSearches] = useLocalStorage<string[]>('vestial-recent-searches', ['NVDA', 'TSLA', 'MSFT'])
+
+  const trimmedQuery = useMemo(() => query.trim(), [query])
 
   const handleSearch = useCallback(
-    async (searchQuery: string) => {
+    async (searchQuery: string, preferredSymbol?: string) => {
       if (!searchQuery.trim()) return
 
       setIsLoading(true)
-      try {
-        // Normalize name -> ticker for common inputs, otherwise assume ticker
-        const cleaned = searchQuery.trim().toLowerCase()
-        const mapped = NAME_TO_TICKER[cleaned]
-        const target = mapped ?? searchQuery.trim().toUpperCase()
+      setFormError(null)
 
-        // Route straight to the company brief page.
+      try {
+        const tickerLike = /^[A-Za-z.\-]{1,10}$/.test(searchQuery.trim())
+        const firstSuggestion = suggestions[0]?.symbol
+        const target = (preferredSymbol ?? firstSuggestion ?? (tickerLike ? searchQuery.trim().toUpperCase() : '')).toUpperCase()
+
+        if (!target) {
+          setFormError('No matching company found. Try a ticker like NVDA or AAPL.')
+          return
+        }
+
+        const validationResponse = await fetch(`/api/company/${encodeURIComponent(target)}?validate=1`, {
+          cache: 'no-store',
+        })
+
+        if (!validationResponse.ok) {
+          setFormError('That symbol could not be found. Try a different company or ticker.')
+          return
+        }
+
+        setRecentSearches((prev) => {
+          const next = [target, ...prev.filter((item) => item !== target)]
+          return next.slice(0, 8)
+        })
+
         router.push(`/company/${encodeURIComponent(target)}`)
       } catch (error) {
-        console.error('Search error:', error)
+        setFormError('Search is temporarily unavailable. Please try again in a moment.')
       } finally {
         setIsLoading(false)
       }
     },
-    [router]
+    [router, setRecentSearches, suggestions]
   )
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     handleSearch(query)
   }
+
+  useEffect(() => {
+    if (trimmedQuery.length < 2) {
+      setSuggestions([])
+      return
+    }
+
+    const timeout = setTimeout(async () => {
+      setIsSearchingSuggestions(true)
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmedQuery)}`, {
+          cache: 'no-store',
+        })
+        const data = await response.json()
+        setSuggestions(Array.isArray(data?.suggestions) ? data.suggestions : [])
+      } catch {
+        setSuggestions([])
+      } finally {
+        setIsSearchingSuggestions(false)
+      }
+    }, 260)
+
+    return () => clearTimeout(timeout)
+  }, [trimmedQuery])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
@@ -78,14 +121,17 @@ export default function SearchPage() {
       {/* Main content */}
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
         {/* Search input */}
-        <form onSubmit={handleSubmit} className="mb-12">
+        <form onSubmit={handleSubmit} className="mb-8">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search by company name or ticker (e.g., AAPL, Tesla)"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setFormError(null)
+              }}
               className="pl-12 h-12 text-base"
             />
             <Button
@@ -96,6 +142,54 @@ export default function SearchPage() {
               {isLoading ? 'Loading...' : 'Search'}
             </Button>
           </div>
+
+          <AnimatePresence>
+            {(isSearchingSuggestions || suggestions.length > 0 || formError) && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: 0.2 }}
+                className="mt-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-3"
+              >
+                {isSearchingSuggestions ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-9 w-full" />
+                    <Skeleton className="h-9 w-full" />
+                  </div>
+                ) : suggestions.length > 0 ? (
+                  <div className="space-y-1">
+                    {suggestions.map((item) => (
+                      <button
+                        key={`${item.symbol}-${item.name}`}
+                        type="button"
+                        onClick={() => handleSearch(item.symbol, item.symbol)}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-background/70 transition flex items-center justify-between"
+                      >
+                        <div>
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">{item.symbol}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={item.source === 'live' ? 'success' : 'secondary'}>
+                            {item.source}
+                          </Badge>
+                          <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                {formError && (
+                  <div className="mt-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300 flex items-start gap-2">
+                    <CircleAlert className="w-4 h-4 mt-0.5" />
+                    <span>{formError}</span>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </form>
 
         {/* Popular companies */}
@@ -128,14 +222,14 @@ export default function SearchPage() {
         </div>
 
         {/* Recent searches */}
-        {RECENT_SEARCHES.length > 0 && (
+        {recentSearches.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-4">
               <Clock className="w-5 h-5 text-muted-foreground" />
               <h2 className="text-lg font-semibold">Recent Searches</h2>
             </div>
             <div className="flex flex-wrap gap-2">
-              {RECENT_SEARCHES.map((symbol) => (
+              {recentSearches.map((symbol) => (
                 <button
                   key={symbol}
                   onClick={() => handleSearch(symbol)}
