@@ -12,73 +12,71 @@ import type {
   RiskFactor,
   Opportunity,
 } from '@/lib/types'
+import { COMPANY_CATALOG } from '@/lib/company-catalog'
 
-// Starter catalog so the route can respond without a symbol lookup service.
-const MOCK_COMPANIES: Record<string, CompanyOverview> = {
-  AAPL: {
-    symbol: 'AAPL',
-    name: 'Apple Inc.',
-    description: 'Apple designs, manufactures, and markets smartphones, computers, wearables, and software.',
-    sector: 'Technology',
-    industry: 'Consumer Electronics',
-    website: 'https://www.apple.com',
-    ceo: 'Tim Cook',
-    founded: 1976,
-    employees: 161000,
-  },
-  MSFT: {
-    symbol: 'MSFT',
-    name: 'Microsoft Corporation',
-    description: 'Microsoft develops and sells software, computing devices, and cloud services.',
-    sector: 'Technology',
-    industry: 'Software',
-    website: 'https://www.microsoft.com',
-    ceo: 'Satya Nadella',
-    founded: 1975,
-    employees: 224116,
-  },
-  TSLA: {
-    symbol: 'TSLA',
-    name: 'Tesla Inc.',
-    description: 'Tesla designs and manufactures electric vehicles and energy storage solutions.',
-    sector: 'Automotive',
-    industry: 'Electric Vehicles',
-    website: 'https://www.tesla.com',
-    ceo: 'Elon Musk',
-    founded: 2003,
-    employees: 128000,
-  },
-  GOOGL: {
-    symbol: 'GOOGL',
-    name: 'Alphabet Inc.',
-    description: 'Alphabet operates Google search engine, YouTube, and other internet services.',
-    sector: 'Technology',
-    industry: 'Internet Services',
-    website: 'https://www.google.com',
-    ceo: 'Sundar Pichai',
-    founded: 1998,
-    employees: 190234,
-  },
+async function getCompanyOverview(symbol: string): Promise<CompanyOverview | null> {
+  const cached = COMPANY_CATALOG[symbol]
+  const apiKey = process.env.FINNHUB_API_KEY
+
+  if (!apiKey) {
+    return cached ?? null
+  }
+
+  try {
+    const profileResponse = await fetch(
+      `https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${apiKey}`,
+      { next: { revalidate: 3600 } }
+    )
+
+    if (!profileResponse.ok) {
+      return cached ?? null
+    }
+
+    const profile = await profileResponse.json()
+
+    if (!profile?.name) {
+      return cached ?? null
+    }
+
+    return {
+      symbol,
+      name: profile.name,
+      description:
+        cached?.description ??
+        `${profile.name} operates in ${profile.finnhubIndustry || 'its sector'} and is listed under ${symbol}.`,
+      sector: profile.finnhubIndustry || cached?.sector || 'Unknown',
+      industry: profile.finnhubIndustry || cached?.industry || 'Unknown',
+      website: profile.weburl || cached?.website || '#',
+      ceo: cached?.ceo,
+      founded: cached?.founded,
+      employees: cached?.employees,
+    }
+  } catch {
+    return cached ?? null
+  }
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { symbol: string } }
 ) {
   try {
     const symbol = (params.symbol as string).toUpperCase()
+    const validateOnly = request.nextUrl.searchParams.get('validate') === '1'
 
-    // Look up a base profile for the requested ticker.
-    const overview = MOCK_COMPANIES[symbol]
+    const overview = await getCompanyOverview(symbol)
     if (!overview) {
-      // Not in our local catalog yet.
       return NextResponse.json(
         { error: 'Company not found' },
         { status: 404 }
       )
     }
 
-    // Pull live market data, then fall back if the provider fails.
+    if (validateOnly) {
+      return NextResponse.json({ symbol: overview.symbol, name: overview.name })
+    }
+
+    // Pull live market data, then fallback only if provider fails.
     let marketData
     try {
       marketData = await getMarketData(symbol)
