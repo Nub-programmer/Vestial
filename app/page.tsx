@@ -6,47 +6,6 @@ import HeroClient from '@/components/landing/HeroClient'
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
-      {/* Top nav */}
-      <nav className="border-b border-border/50 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-bold text-xl">Vestial</span>
-            </Link>
-            <div className="hidden md:flex items-center gap-8">
-              <Link href="#features" className="text-sm hover:text-primary transition">
-                Features
-              </Link>
-              <Link href="#how-it-works" className="text-sm hover:text-primary transition">
-                How It Works
-              </Link>
-              <Link href="/about" className="text-sm hover:text-primary transition">
-                About
-              </Link>
-              <div className="flex items-center gap-3 border-l border-border/50 pl-8">
-                <Link href="/search">
-                  <Button variant="ghost" size="sm">
-                    Search
-                  </Button>
-                </Link>
-                <Link href="/compare">
-                  <Button variant="ghost" size="sm">
-                    Compare
-                  </Button>
-                </Link>
-                <Link href="/watchlist">
-                  <Button variant="ghost" size="sm">
-                    Watchlist
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* Hero */}
       <section className="relative px-4 sm:px-6 lg:px-8 pt-20 pb-24">
@@ -56,9 +15,12 @@ export default function Home() {
       </section>
 
       {/* Feature highlights */}
-      <section id="features" className="px-4 sm:px-6 lg:px-8 py-24 bg-card/50">
+      <section id="features" className="px-4 sm:px-6 lg:px-8 py-24 bg-card/40">
         <div className="mx-auto max-w-7xl">
-          <h2 className="text-4xl font-bold text-center mb-16">Powerful Features</h2>
+          <h2 className="text-4xl font-bold text-center mb-4">Built For Fast, Confident Decisions</h2>
+          <p className="text-center text-muted-foreground mb-16 max-w-2xl mx-auto">
+            One workflow for market context, current headlines, risks, and opportunity signals.
+          </p>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
@@ -69,20 +31,20 @@ export default function Home() {
               },
               {
                 icon: Zap,
-                title: 'AI Intelligence',
-                description: 'Smart summaries and beginner-friendly explanations of complex companies',
+                title: 'Clear Explanations',
+                description: 'Readable summaries that simplify complex company updates and why they matter',
               },
               {
                 icon: TrendingUp,
-                title: 'News & Sentiment',
-                description: 'Latest news with sentiment analysis to understand market mood',
+                title: 'Signal Over Noise',
+                description: 'Current news with sentiment cues so you can scan bullish and bearish pressure quickly',
               },
             ].map((feature, i) => {
               const Icon = feature.icon
               return (
                 <div
                   key={i}
-                  className="p-6 rounded-lg border border-border/50 bg-background hover:bg-card transition"
+                  className="p-6 rounded-xl border border-border/50 bg-background/80 card-glass hover:border-cyan-400/30 transition"
                 >
                   <Icon className="w-10 h-10 text-primary mb-4" />
                   <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
@@ -96,23 +58,18 @@ export default function Home() {
 
       {/* CTA */}
       <section className="px-4 sm:px-6 lg:px-8 py-24">
-        <div className="mx-auto max-w-4xl text-center space-y-8 bg-gradient-to-r from-primary/10 to-primary/5 p-12 rounded-lg border border-primary/20">
-          <h2 className="text-3xl font-bold">Ready to Explore?</h2>
+        <div className="mx-auto max-w-4xl text-center space-y-8 bg-gradient-to-r from-cyan-500/10 to-amber-400/10 p-12 rounded-xl border border-cyan-300/20 card-glass">
+          <h2 className="text-3xl font-bold">Start With A Ticker. Leave With Clarity.</h2>
           <p className="text-lg text-muted-foreground">
-            Search for any company and get instant insights backed by real data and AI.
+            Research faster with live market context, source-backed headlines, and concise briefings.
           </p>
           <Link href="/search">
-            <Button size="lg">
+            <Button size="lg" className="glow-accent">
               Start Searching
             </Button>
           </Link>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-border/50 px-4 sm:px-6 lg:px-8 py-12 text-center text-sm text-muted-foreground">
-        <p>© 2024 Vestial. Built with Next.js, AI, and data. Powered by Groq, NewsAPI, and Finnhub.</p>
-      </footer>
     </div>
   )
 }
