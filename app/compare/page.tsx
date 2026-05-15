@@ -45,11 +45,13 @@ export default function ComparePage() {
     brief,
     isLoading,
     symbol,
+    onInputChange,
     onSearch,
   }: {
     brief: CompanyBrief | null
     isLoading: boolean
     symbol: string
+    onInputChange: (s: string) => void
     onSearch: (s: string) => void
   }) => {
     if (isLoading) {
@@ -78,7 +80,7 @@ export default function ComparePage() {
               <Input
                 placeholder="Enter company name or ticker"
                 value={symbol}
-                onChange={(e) => onSearch(e.target.value)}
+                onChange={(e) => onInputChange(e.target.value)}
               />
               <Button onClick={() => onSearch(symbol)} className="w-full">
                 <Search className="w-4 h-4 mr-2" />
@@ -91,7 +93,7 @@ export default function ComparePage() {
     }
 
     return (
-      <Card>
+      <Card className="card-glass">
         <CardHeader>
           <CardTitle>{brief.name}</CardTitle>
           <CardDescription>{brief.symbol}</CardDescription>
@@ -164,13 +166,13 @@ export default function ComparePage() {
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           {/* Left company */}
-          <div>
+                  <div>
             <CompanyCard
               brief={company1}
               isLoading={isLoadingCompany1}
               symbol={company1Symbol}
+                      onInputChange={setCompany1Symbol}
               onSearch={(s) => {
-                setCompany1Symbol(s)
                 fetchCompany(s, true)
               }}
             />
@@ -190,8 +192,8 @@ export default function ComparePage() {
               brief={company2}
               isLoading={isLoadingCompany2}
               symbol={company2Symbol}
+                      onInputChange={setCompany2Symbol}
               onSearch={(s) => {
-                setCompany2Symbol(s)
                 fetchCompany(s, false)
               }}
             />
