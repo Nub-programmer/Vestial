@@ -28,7 +28,7 @@ export default function Header() {
             <Link href="/watchlist" className="text-sm text-muted-foreground hover:text-foreground transition">Watchlist</Link>
             <div className="flex items-center gap-3 border-l border-border/40 pl-6">
               <Link href="/search">
-                <Button variant="ghost" size="sm">Try Search</Button>
+                <Button variant="ghost" size="sm">Search</Button>
               </Link>
               <Link href="/about">
                 <Button variant="default" size="sm">Get Started <ArrowRight className="w-4 h-4" /></Button>

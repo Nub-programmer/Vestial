@@ -12,17 +12,17 @@ export default function Footer() {
           </div>
           <div>
             <div className="font-semibold">Vestial</div>
-            <div className="text-xs text-muted-foreground">Actionable company intelligence, faster.</div>
+            <div className="text-xs text-muted-foreground">Source-backed company intelligence for faster decisions.</div>
           </div>
         </div>
 
         <div className="flex items-center gap-6">
           <Link href="/about" className="hover:text-foreground">About</Link>
-          <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
-          <Link href="/terms" className="hover:text-foreground">Terms</Link>
+          <Link href="/search" className="hover:text-foreground">Search</Link>
+          <Link href="/compare" className="hover:text-foreground">Compare</Link>
         </div>
 
-        <div className="text-xs text-muted-foreground">© {new Date().getFullYear()} Vestial. All rights reserved.</div>
+        <div className="text-xs text-muted-foreground">© {new Date().getFullYear()} Vestial Labs</div>
       </div>
     </footer>
   )
