@@ -3,52 +3,75 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { TrendingUp, TrendingDown, BookOpen, AlertTriangle, Lightbulb } from 'lucide-react'
+import SentimentChip from '@/components/ui/sentiment-chip'
+import { TrendingUp, TrendingDown, BookOpen, AlertTriangle, Lightbulb, RefreshCw } from 'lucide-react'
 import type { CompanyBrief } from '@/lib/types'
 
 export default function CompanyBriefPage() {
   const params = useParams()
-  const symbol = params?.symbol as string
+  const symbol = ((params?.symbol as string) || '').toUpperCase()
   const [brief, setBrief] = useState<CompanyBrief | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isWatchlisted, setIsWatchlisted] = useState(false)
 
-  useEffect(() => {
-    const fetchCompanyBrief = async () => {
-      if (!symbol) return
+  const fetchCompanyBrief = async (forceRefresh: boolean = false) => {
+    if (!symbol) return
 
+    if (forceRefresh) {
+      setIsRefreshing(true)
+    } else {
       setIsLoading(true)
-      setError(null)
+    }
+    setError(null)
 
-      try {
-        const response = await fetch(`/api/company/${symbol}`)
-        if (!response.ok) {
-          throw new Error(`Failed to fetch company data: ${response.statusText}`)
+    try {
+      const suffix = forceRefresh ? `?refresh=${Date.now()}` : ''
+      const response = await fetch(`/api/company/${symbol}${suffix}`, {
+        cache: forceRefresh ? 'no-store' : 'default',
+      })
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Company was not found. Try a ticker like NVDA, AAPL, or MSFT.')
         }
-        const data = await response.json()
-        setBrief(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch company data')
-      } finally {
+        throw new Error(`Failed to fetch company data: ${response.statusText}`)
+      }
+      const data = await response.json()
+      setBrief(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch company data')
+    } finally {
+      if (forceRefresh) {
+        setIsRefreshing(false)
+      } else {
         setIsLoading(false)
       }
     }
+  }
 
+  useEffect(() => {
     fetchCompanyBrief()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol])
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
-          <Skeleton className="h-32 w-full mb-8" />
-          <Skeleton className="h-64 w-full mb-8" />
+          <Skeleton className="h-32 w-full mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
           <Skeleton className="h-96 w-full" />
         </div>
       </div>
@@ -58,50 +81,70 @@ export default function CompanyBriefPage() {
   if (error || !brief) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-card flex items-center justify-center">
-        <Card className="max-w-md">
+        <Card className="max-w-md card-glass">
           <CardHeader>
-            <CardTitle>Error</CardTitle>
+            <CardTitle>Unable To Load Company</CardTitle>
             <CardDescription>{error || 'Company not found'}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button onClick={() => window.history.back()}>Go Back</Button>
+          <CardContent className="flex gap-3">
+            <Button onClick={() => window.history.back()} variant="outline">Go Back</Button>
+            <Button onClick={() => fetchCompanyBrief(true)}>Retry</Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  const isPositive = brief.sentiment === 'bullish'
-  const priceChangeColor = brief.marketData.change > 0 ? 'text-green-500' : 'text-red-500'
+  const priceChangeColor = brief.marketData.change > 0 ? 'text-emerald-400' : 'text-rose-400'
   const changeArrow = brief.marketData.change > 0 ? <TrendingUp /> : <TrendingDown />
+  const lastUpdated = new Date(brief.lastUpdated)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
       {/* Sticky top summary */}
       <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-3xl font-bold">{brief.name}</h1>
-              <p className="text-muted-foreground">{brief.symbol}</p>
+              <h1 className="text-3xl font-bold tracking-tight">{brief.name}</h1>
+              <p className="text-muted-foreground">{brief.symbol} • Updated {lastUpdated.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Live market and news feeds are used when available. Fallback data is applied only on provider errors.
+              </p>
             </div>
-            <Button
-              variant={isWatchlisted ? 'default' : 'outline'}
-              onClick={() => setIsWatchlisted(!isWatchlisted)}
-            >
-              {isWatchlisted ? '★ Watchlist' : '☆ Add to Watchlist'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => fetchCompanyBrief(true)}
+                disabled={isRefreshing}
+                className="gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button
+                variant={isWatchlisted ? 'default' : 'outline'}
+                onClick={() => setIsWatchlisted(!isWatchlisted)}
+              >
+                {isWatchlisted ? '★ Watchlist' : '☆ Add to Watchlist'}
+              </Button>
+            </div>
           </div>
 
           {/* Quick market snapshot */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="bg-card/50">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          >
+            <Card className="bg-card/50 card-glass ambient-neon">
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-2">Current Price</p>
                 <p className="text-3xl font-bold">${brief.marketData.price.toFixed(2)}</p>
               </CardContent>
             </Card>
-            <Card className="bg-card/50">
+            <Card className="bg-card/50 card-glass">
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-2">24h Change</p>
                 <p className={`text-2xl font-bold flex items-center gap-1 ${priceChangeColor}`}>
@@ -110,21 +153,21 @@ export default function CompanyBriefPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-card/50">
+            <Card className="bg-card/50 card-glass">
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-2">Market Cap</p>
                 <p className="text-2xl font-bold">{brief.marketData.marketCap}</p>
               </CardContent>
             </Card>
-            <Card className="bg-card/50">
+            <Card className="bg-card/50 card-glass">
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground mb-2">Sentiment</p>
-                <Badge variant={isPositive ? 'success' : isPositive === null ? 'warning' : 'danger'}>
+                <SentimentChip sentiment={brief.sentiment}>
                   {brief.sentiment.charAt(0).toUpperCase() + brief.sentiment.slice(1)}
-                </Badge>
+                </SentimentChip>
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -141,7 +184,7 @@ export default function CompanyBriefPage() {
           {/* Overview tab */}
           <TabsContent value="overview" className="space-y-6">
             {/* AI summary */}
-            <Card>
+            <Card className="card-glass">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BookOpen className="w-5 h-5" />
@@ -155,7 +198,7 @@ export default function CompanyBriefPage() {
 
             {/* Core metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
+              <Card className="card-glass">
                 <CardHeader>
                   <CardTitle>Market Data</CardTitle>
                 </CardHeader>
@@ -187,7 +230,7 @@ export default function CompanyBriefPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="card-glass">
                 <CardHeader>
                   <CardTitle>Company Info</CardTitle>
                 </CardHeader>
@@ -220,9 +263,9 @@ export default function CompanyBriefPage() {
 
             {/* Bullish vs bearish factors */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-green-600/30 bg-green-600/5">
+              <Card className="border-emerald-500/30 bg-emerald-500/5 card-glass">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-600">
+                  <CardTitle className="flex items-center gap-2 text-emerald-300">
                     <TrendingUp className="w-5 h-5" />
                     Bullish Factors
                   </CardTitle>
@@ -231,7 +274,7 @@ export default function CompanyBriefPage() {
                   <ul className="space-y-2">
                     {brief.bullishFactors.map((factor, i) => (
                       <li key={i} className="flex gap-2">
-                        <span className="text-green-600 mt-0.5">✓</span>
+                        <span className="text-emerald-300 mt-0.5">✓</span>
                         <span>{factor}</span>
                       </li>
                     ))}
@@ -239,9 +282,9 @@ export default function CompanyBriefPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-red-600/30 bg-red-600/5">
+              <Card className="border-rose-500/30 bg-rose-500/5 card-glass">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-red-600">
+                  <CardTitle className="flex items-center gap-2 text-rose-300">
                     <TrendingDown className="w-5 h-5" />
                     Bearish Factors
                   </CardTitle>
@@ -250,7 +293,7 @@ export default function CompanyBriefPage() {
                   <ul className="space-y-2">
                     {brief.bearishFactors.map((factor, i) => (
                       <li key={i} className="flex gap-2">
-                        <span className="text-red-600 mt-0.5">✗</span>
+                        <span className="text-rose-300 mt-0.5">✗</span>
                         <span>{factor}</span>
                       </li>
                     ))}
@@ -264,7 +307,7 @@ export default function CompanyBriefPage() {
           <TabsContent value="analysis" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Risks */}
-              <Card>
+              <Card className="card-glass">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <AlertTriangle className="w-5 h-5 text-red-600" />
@@ -273,7 +316,7 @@ export default function CompanyBriefPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {brief.risks.map((risk, i) => (
-                    <div key={i} className="p-3 rounded-lg bg-red-600/10 border border-red-600/30">
+                    <div key={i} className="p-3 rounded-lg bg-rose-600/10 border border-rose-600/30">
                       <p className="font-semibold text-sm">{risk.title}</p>
                       <p className="text-sm text-muted-foreground mt-1">{risk.description}</p>
                       <Badge variant="danger" className="mt-2 text-xs">
@@ -285,7 +328,7 @@ export default function CompanyBriefPage() {
               </Card>
 
               {/* Opportunities */}
-              <Card>
+              <Card className="card-glass">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Lightbulb className="w-5 h-5 text-green-600" />
@@ -294,7 +337,7 @@ export default function CompanyBriefPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {brief.opportunities.map((opp, i) => (
-                    <div key={i} className="p-3 rounded-lg bg-green-600/10 border border-green-600/30">
+                    <div key={i} className="p-3 rounded-lg bg-emerald-600/10 border border-emerald-600/30">
                       <p className="font-semibold text-sm">{opp.title}</p>
                       <p className="text-sm text-muted-foreground mt-1">{opp.description}</p>
                       <Badge variant="success" className="mt-2 text-xs">
@@ -310,7 +353,7 @@ export default function CompanyBriefPage() {
           {/* News tab */}
           <TabsContent value="news" className="space-y-4">
             {brief.news.map((article) => (
-              <Card key={article.id} className="hover:bg-card/80 transition">
+              <Card key={article.id} className="hover:bg-card/80 transition card-glass">
                 <CardContent className="p-6">
                   <div className="flex gap-4">
                     {article.image && (
@@ -348,7 +391,7 @@ export default function CompanyBriefPage() {
 
           {/* Explain-like-15 tab */}
           <TabsContent value="explained">
-            <Card>
+            <Card className="card-glass">
               <CardHeader>
                 <CardTitle>Explain Like I&apos;m 15</CardTitle>
                 <CardDescription>A beginner-friendly explanation of this company</CardDescription>
