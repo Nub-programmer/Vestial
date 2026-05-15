@@ -7,6 +7,18 @@ type SearchSuggestion = {
   source: 'live' | 'local'
 }
 
+type FinnhubSearchItem = {
+  symbol?: unknown
+  description?: unknown
+}
+
+function isValidFinnhubSearchItem(item: FinnhubSearchItem): item is {
+  symbol: string
+  description: string
+} {
+  return typeof item.symbol === 'string' && typeof item.description === 'string'
+}
+
 function getLocalSuggestions(query: string): SearchSuggestion[] {
   const normalized = query.trim().toLowerCase()
   const localMatches = Object.values(COMPANY_CATALOG).filter((company) => {
@@ -53,16 +65,18 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    const result = Array.isArray(data?.result) ? data.result : []
+    const result: FinnhubSearchItem[] = Array.isArray(data?.result)
+      ? (data.result as FinnhubSearchItem[])
+      : []
 
     const live: SearchSuggestion[] = result
-      .filter((item) => typeof item?.symbol === 'string' && typeof item?.description === 'string')
+      .filter(isValidFinnhubSearchItem)
       .map((item) => ({
         symbol: item.symbol,
         name: item.description,
         source: 'live' as const,
       }))
-      .filter((item) => item.symbol.length > 0)
+      .filter((item: SearchSuggestion) => item.symbol.length > 0)
       .slice(0, 8)
 
     return NextResponse.json({
