@@ -4,39 +4,74 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { TrendingUp, TrendingDown, Plus, Trash2, ArrowRight } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useLocalStorage } from '@/lib/hooks/use-local-storage'
+import { TrendingUp, TrendingDown, Plus, Trash2, ArrowRight, RefreshCw } from 'lucide-react'
 import type { WatchlistItem } from '@/lib/types'
 
-const DEMO_WATCHLIST: WatchlistItem[] = [
-  {
-    symbol: 'AAPL',
-    name: 'Apple Inc.',
-    currentPrice: 182.45,
-    change: 2.35,
-    changePercent: 1.31,
-    addedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-  },
-  {
-    symbol: 'MSFT',
-    name: 'Microsoft Corporation',
-    currentPrice: 428.75,
-    change: 5.20,
-    changePercent: 1.23,
-    addedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-  },
-  {
-    symbol: 'TSLA',
-    name: 'Tesla Inc.',
-    currentPrice: 242.50,
-    change: -8.35,
-    changePercent: -3.33,
-    addedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-  },
-]
+const DEFAULT_SYMBOLS = ['AAPL', 'MSFT', 'TSLA']
 
 export default function WatchlistPage() {
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>(DEMO_WATCHLIST)
+  const [savedSymbols, setSavedSymbols] = useLocalStorage<string[]>('vestial-watchlist-symbols', DEFAULT_SYMBOLS)
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [totalGain, setTotalGain] = useState(0)
+
+  const hydrateWatchlist = async (forceRefresh: boolean = false) => {
+    if (savedSymbols.length === 0) {
+      setWatchlist([])
+      setIsLoading(false)
+      setLastUpdated(new Date())
+      return
+    }
+
+    if (forceRefresh) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
+    }
+
+    try {
+      const responses = await Promise.all(
+        savedSymbols.map(async (symbol) => {
+          const suffix = forceRefresh ? `?refresh=${Date.now()}` : ''
+          const response = await fetch(`/api/company/${symbol}${suffix}`, {
+            cache: forceRefresh ? 'no-store' : 'default',
+          })
+
+          if (!response.ok) {
+            return null
+          }
+
+          const data = await response.json()
+          const item: WatchlistItem = {
+            symbol: data.symbol,
+            name: data.name,
+            currentPrice: data.marketData.price,
+            change: data.marketData.change,
+            changePercent: data.marketData.changePercent,
+            addedAt: new Date(),
+          }
+
+          return item
+        })
+      )
+
+      const nextWatchlist = responses.filter((item): item is WatchlistItem => item !== null)
+      setWatchlist(nextWatchlist)
+      setLastUpdated(new Date())
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    hydrateWatchlist()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedSymbols])
 
   useEffect(() => {
     // Quick aggregate so the summary cards stay in sync.
@@ -47,7 +82,7 @@ export default function WatchlistPage() {
   }, [watchlist])
 
   const removeFromWatchlist = (symbol: string) => {
-    setWatchlist(watchlist.filter((item) => item.symbol !== symbol))
+    setSavedSymbols((prev) => prev.filter((item) => item !== symbol))
   }
 
   const sortedWatchlist = [...watchlist].sort((a, b) => {
@@ -62,14 +97,22 @@ export default function WatchlistPage() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold">Watchlist</h1>
-              <p className="text-muted-foreground">Track your favorite companies</p>
+              <p className="text-muted-foreground">
+                Track your companies with live pricing {lastUpdated ? `• Updated ${lastUpdated.toLocaleTimeString()}` : ''}
+              </p>
             </div>
-            <Link href="/search">
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Company
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => hydrateWatchlist(true)} disabled={isRefreshing}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
               </Button>
-            </Link>
+              <Link href="/search">
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Company
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Summary cards */}
@@ -113,7 +156,14 @@ export default function WatchlistPage() {
 
       {/* Main content */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
-        {watchlist.length === 0 ? (
+        {isLoading && (
+          <div className="grid gap-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        )}
+
+        {!isLoading && watchlist.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
               <p className="text-lg text-muted-foreground mb-6">Your watchlist is empty</p>
@@ -125,7 +175,7 @@ export default function WatchlistPage() {
               </Link>
             </CardContent>
           </Card>
-        ) : (
+        ) : !isLoading ? (
           <div className="grid gap-4">
             {sortedWatchlist.map((item) => {
               const isPositive = item.change > 0
@@ -178,7 +228,7 @@ export default function WatchlistPage() {
               )
             })}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )
