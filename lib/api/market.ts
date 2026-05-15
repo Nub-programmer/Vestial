@@ -50,20 +50,32 @@ export async function getMarketData(symbol: string): Promise<MarketData> {
 
 // Lightweight fallback so UI still works without API data.
 export function getMockMarketData(_symbol: string, _name: string): MarketData {
-  const basePrice = 100 + Math.random() * 200
-  const change = (Math.random() - 0.5) * 10
+  const seed = _symbol
+    .split('')
+    .reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+
+  const pseudo = (value: number) => {
+    const x = Math.sin(value) * 10000
+    return x - Math.floor(x)
+  }
+
+  const basePrice = 80 + pseudo(seed) * 320
+  const change = (pseudo(seed * 1.7) - 0.5) * 8
   const changePercent = (change / basePrice) * 100
+  const volatility = 12 + pseudo(seed * 2.3) * 25
+  const dailyVolume = Math.floor(5_000_000 + pseudo(seed * 3.1) * 45_000_000)
+  const avgVolume = Math.floor(dailyVolume * (0.7 + pseudo(seed * 4.9) * 0.6))
 
   return {
     price: basePrice,
     change: change,
     changePercent: changePercent,
-    high52Week: basePrice + 50,
-    low52Week: basePrice - 30,
-    marketCap: `$${(Math.random() * 1000).toFixed(1)}B`,
-    peRatio: 15 + Math.random() * 20,
-    dividendYield: Math.random() * 5,
-    volume: Math.floor(Math.random() * 50000000),
-    avgVolume: Math.floor(Math.random() * 30000000),
+    high52Week: basePrice + volatility,
+    low52Week: Math.max(1, basePrice - volatility),
+    marketCap: `$${(30 + pseudo(seed * 5.8) * 1200).toFixed(1)}B`,
+    peRatio: 12 + pseudo(seed * 6.7) * 28,
+    dividendYield: pseudo(seed * 7.3) * 3.5,
+    volume: dailyVolume,
+    avgVolume: avgVolume,
   }
 }
