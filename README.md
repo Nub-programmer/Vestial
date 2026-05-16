@@ -1,4 +1,4 @@
-# Vestial
+# Vestial 
 
 **AI-powered company intelligence in minutes.**
 
