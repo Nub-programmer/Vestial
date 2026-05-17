@@ -41,109 +41,6 @@ export default function ComparePage() {
     }
   }
 
-  const CompanyCard = ({
-    brief,
-    isLoading,
-    symbol,
-    onInputChange,
-    onSearch,
-  }: {
-    brief: CompanyBrief | null
-    isLoading: boolean
-    symbol: string
-    onInputChange: (s: string) => void
-    onSearch: (s: string) => void
-  }) => {
-    if (isLoading) {
-      return (
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-32 mb-2" />
-            <Skeleton className="h-4 w-24" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-          </CardContent>
-        </Card>
-      )
-    }
-
-    if (!brief) {
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Search Company</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Input
-                placeholder="Enter company name or ticker"
-                value={symbol}
-                onChange={(e) => onInputChange(e.target.value)}
-              />
-              <Button onClick={() => onSearch(symbol)} className="w-full">
-                <Search className="w-4 h-4 mr-2" />
-                Search
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )
-    }
-
-    return (
-      <Card className="card-glass">
-        <CardHeader>
-          <CardTitle>{brief.name}</CardTitle>
-          <CardDescription>{brief.symbol}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Price */}
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Current Price</p>
-            <p className="text-3xl font-bold">${brief.marketData.price.toFixed(2)}</p>
-            <Badge variant={brief.marketData.change > 0 ? 'success' : 'danger'}>
-              {brief.marketData.change > 0 ? '+' : ''}{brief.marketData.changePercent.toFixed(2)}%
-            </Badge>
-          </div>
-
-          {/* Key metrics */}
-          <div className="space-y-3 border-t border-border/50 pt-6">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Market Cap</span>
-              <span className="font-semibold">{brief.marketData.marketCap}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">52-Week Range</span>
-              <span className="font-semibold">
-                ${brief.marketData.low52Week.toFixed(2)} - ${brief.marketData.high52Week.toFixed(2)}
-              </span>
-            </div>
-            {brief.marketData.peRatio && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">P/E Ratio</span>
-                <span className="font-semibold">{brief.marketData.peRatio.toFixed(2)}</span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Volume</span>
-              <span className="font-semibold">{(brief.marketData.volume / 1e6).toFixed(2)}M</span>
-            </div>
-          </div>
-
-          {/* Sentiment */}
-          <div className="space-y-2 border-t border-border/50 pt-6">
-            <p className="text-sm text-muted-foreground">Sentiment</p>
-            <Badge variant={brief.sentiment === 'bullish' ? 'success' : brief.sentiment === 'bearish' ? 'danger' : 'warning'}>
-              {brief.sentiment.charAt(0).toUpperCase() + brief.sentiment.slice(1)}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
       {/* Page heading */}
@@ -166,7 +63,7 @@ export default function ComparePage() {
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           {/* Left company */}
-                  <div>
+          <div>
             <CompanyCard
               brief={company1}
               isLoading={isLoadingCompany1}
@@ -300,6 +197,117 @@ export default function ComparePage() {
         )}
       </div>
     </div>
+  )
+}
+
+type CompanyCardProps = {
+  brief: CompanyBrief | null
+  isLoading: boolean
+  symbol: string
+  onInputChange: (s: string) => void
+  onSearch: (s: string) => void
+}
+
+function CompanyCard({
+  brief,
+  isLoading,
+  symbol,
+  onInputChange,
+  onSearch,
+}: CompanyCardProps) {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-32 mb-2" />
+          <Skeleton className="h-4 w-24" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!brief) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Search Company</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <Input
+              placeholder="Enter company name or ticker"
+              value={symbol}
+              onChange={(e) => onInputChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  onSearch(symbol)
+                }
+              }}
+            />
+            <Button onClick={() => onSearch(symbol)} className="w-full">
+              <Search className="w-4 h-4 mr-2" />
+              Search
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="card-glass">
+      <CardHeader>
+        <CardTitle>{brief.name}</CardTitle>
+        <CardDescription>{brief.symbol}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Price */}
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">Current Price</p>
+          <p className="text-3xl font-bold">${brief.marketData.price.toFixed(2)}</p>
+          <Badge variant={brief.marketData.change > 0 ? 'success' : 'danger'}>
+            {brief.marketData.change > 0 ? '+' : ''}{brief.marketData.changePercent.toFixed(2)}%
+          </Badge>
+        </div>
+
+        {/* Key metrics */}
+        <div className="space-y-3 border-t border-border/50 pt-6">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Market Cap</span>
+            <span className="font-semibold">{brief.marketData.marketCap}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">52-Week Range</span>
+            <span className="font-semibold">
+              ${brief.marketData.low52Week.toFixed(2)} - ${brief.marketData.high52Week.toFixed(2)}
+            </span>
+          </div>
+          {brief.marketData.peRatio && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">P/E Ratio</span>
+              <span className="font-semibold">{brief.marketData.peRatio.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Volume</span>
+            <span className="font-semibold">{(brief.marketData.volume / 1e6).toFixed(2)}M</span>
+          </div>
+        </div>
+
+        {/* Sentiment */}
+        <div className="space-y-2 border-t border-border/50 pt-6">
+          <p className="text-sm text-muted-foreground">Sentiment</p>
+          <Badge variant={brief.sentiment === 'bullish' ? 'success' : brief.sentiment === 'bearish' ? 'danger' : 'warning'}>
+            {brief.sentiment.charAt(0).toUpperCase() + brief.sentiment.slice(1)}
+          </Badge>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
