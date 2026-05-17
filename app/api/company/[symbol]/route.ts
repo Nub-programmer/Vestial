@@ -14,6 +14,32 @@ import type {
 } from '@/lib/types'
 import { COMPANY_CATALOG } from '@/lib/company-catalog'
 
+type FinnhubSearchItem = {
+  symbol?: string
+  description?: string
+}
+
+async function fetchFinnhubSearch(symbol: string, apiKey: string): Promise<FinnhubSearchItem | null> {
+  try {
+    const response = await fetch(
+      `https://finnhub.io/api/v1/search?q=${encodeURIComponent(symbol)}&token=${apiKey}`,
+      { next: { revalidate: 3600 } }
+    )
+
+    if (!response.ok) {
+      return null
+    }
+
+    const data = await response.json()
+    const results = Array.isArray(data?.result) ? (data.result as FinnhubSearchItem[]) : []
+
+    const exact = results.find((item) => item.symbol?.toUpperCase() === symbol)
+    return exact ?? results[0] ?? null
+  } catch {
+    return null
+  }
+}
+
 async function getCompanyOverview(symbol: string): Promise<CompanyOverview | null> {
   const cached = COMPANY_CATALOG[symbol]
   const apiKey = process.env.FINNHUB_API_KEY
@@ -34,19 +60,23 @@ async function getCompanyOverview(symbol: string): Promise<CompanyOverview | nul
 
     const profile = await profileResponse.json()
 
-    if (!profile?.name) {
+    const name = profile?.name
+    const fallbackSearch = !name ? await fetchFinnhubSearch(symbol, apiKey) : null
+
+    const resolvedName = name || fallbackSearch?.description || cached?.name
+    if (!resolvedName) {
       return cached ?? null
     }
 
     return {
       symbol,
-      name: profile.name,
+      name: resolvedName,
       description:
         cached?.description ??
-        `${profile.name} operates in ${profile.finnhubIndustry || 'its sector'} and is listed under ${symbol}.`,
-      sector: profile.finnhubIndustry || cached?.sector || 'Unknown',
-      industry: profile.finnhubIndustry || cached?.industry || 'Unknown',
-      website: profile.weburl || cached?.website || '#',
+        `${resolvedName} operates in ${profile?.finnhubIndustry || 'its sector'} and is listed under ${symbol}.`,
+      sector: profile?.finnhubIndustry || cached?.sector || 'Unknown',
+      industry: profile?.finnhubIndustry || cached?.industry || 'Unknown',
+      website: profile?.weburl || cached?.website || '#',
       ceo: cached?.ceo,
       founded: cached?.founded,
       employees: cached?.employees,

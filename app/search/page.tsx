@@ -36,6 +36,18 @@ export default function SearchPage() {
 
   const trimmedQuery = useMemo(() => query.trim(), [query])
 
+  const requestSuggestions = useCallback(async (term: string) => {
+    try {
+      const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, {
+        cache: 'no-store',
+      })
+      const data = await response.json()
+      return Array.isArray(data?.suggestions) ? (data.suggestions as SearchSuggestion[]) : []
+    } catch {
+      return []
+    }
+  }, [])
+
   const handleSearch = useCallback(
     async (searchQuery: string, preferredSymbol?: string) => {
       if (!searchQuery.trim()) return
@@ -44,21 +56,20 @@ export default function SearchPage() {
       setFormError(null)
 
       try {
-        const tickerLike = /^[A-Za-z.\-]{1,10}$/.test(searchQuery.trim())
-        const firstSuggestion = suggestions[0]?.symbol
-        const target = (preferredSymbol ?? firstSuggestion ?? (tickerLike ? searchQuery.trim().toUpperCase() : '')).toUpperCase()
+        const cleaned = searchQuery.trim()
+        const tickerLike = /^[A-Za-z.\-]{1,10}$/.test(cleaned)
+        let resolvedSuggestions = suggestions
+
+        if (!preferredSymbol && !tickerLike && resolvedSuggestions.length === 0) {
+          resolvedSuggestions = await requestSuggestions(cleaned)
+          setSuggestions(resolvedSuggestions)
+        }
+
+        const firstSuggestion = resolvedSuggestions[0]?.symbol
+        const target = (preferredSymbol ?? firstSuggestion ?? (tickerLike ? cleaned.toUpperCase() : '')).toUpperCase()
 
         if (!target) {
           setFormError('No matching company found. Try a ticker like NVDA or AAPL.')
-          return
-        }
-
-        const validationResponse = await fetch(`/api/company/${encodeURIComponent(target)}?validate=1`, {
-          cache: 'no-store',
-        })
-
-        if (!validationResponse.ok) {
-          setFormError('That symbol could not be found. Try a different company or ticker.')
           return
         }
 
@@ -74,7 +85,7 @@ export default function SearchPage() {
         setIsLoading(false)
       }
     },
-    [router, setRecentSearches, suggestions]
+    [requestSuggestions, router, setRecentSearches, suggestions]
   )
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -91,11 +102,8 @@ export default function SearchPage() {
     const timeout = setTimeout(async () => {
       setIsSearchingSuggestions(true)
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmedQuery)}`, {
-          cache: 'no-store',
-        })
-        const data = await response.json()
-        setSuggestions(Array.isArray(data?.suggestions) ? data.suggestions : [])
+        const nextSuggestions = await requestSuggestions(trimmedQuery)
+        setSuggestions(nextSuggestions)
       } catch {
         setSuggestions([])
       } finally {
@@ -104,7 +112,7 @@ export default function SearchPage() {
     }, 260)
 
     return () => clearTimeout(timeout)
-  }, [trimmedQuery])
+  }, [requestSuggestions, trimmedQuery])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-card">
