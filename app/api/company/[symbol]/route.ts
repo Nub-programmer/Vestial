@@ -12,17 +12,17 @@ import type {
   RiskFactor,
   Opportunity,
 } from '@/lib/types'
-import { COMPANY_CATALOG } from '@/lib/company-catalog'
+import { COMPANY_CATALOG, resolveAlias } from '@/lib/company-catalog'
 
 type FinnhubSearchItem = {
   symbol?: string
   description?: string
 }
 
-async function fetchFinnhubSearch(symbol: string, apiKey: string): Promise<FinnhubSearchItem | null> {
+async function fetchFinnhubSearch(query: string, apiKey: string): Promise<FinnhubSearchItem | null> {
   try {
     const response = await fetch(
-      `https://finnhub.io/api/v1/search?q=${encodeURIComponent(symbol)}&token=${apiKey}`,
+      `https://finnhub.io/api/v1/search?q=${encodeURIComponent(query)}&token=${apiKey}`,
       { next: { revalidate: 3600 } }
     )
 
@@ -33,14 +33,14 @@ async function fetchFinnhubSearch(symbol: string, apiKey: string): Promise<Finnh
     const data = await response.json()
     const results = Array.isArray(data?.result) ? (data.result as FinnhubSearchItem[]) : []
 
-    const exact = results.find((item) => item.symbol?.toUpperCase() === symbol)
+    const exact = results.find((item) => item.symbol?.toUpperCase() === query.toUpperCase())
     return exact ?? results[0] ?? null
   } catch {
     return null
   }
 }
 
-async function getCompanyOverview(symbol: string): Promise<CompanyOverview | null> {
+async function getCompanyOverview(symbol: string, fallbackQuery: string): Promise<CompanyOverview | null> {
   const cached = COMPANY_CATALOG[symbol]
   const apiKey = process.env.FINNHUB_API_KEY
 
@@ -54,26 +54,53 @@ async function getCompanyOverview(symbol: string): Promise<CompanyOverview | nul
       { next: { revalidate: 3600 } }
     )
 
-    if (!profileResponse.ok) {
-      return cached ?? null
+    const profile = profileResponse.ok ? await profileResponse.json() : null
+
+    let resolvedSymbol = symbol
+    let resolvedName = profile?.name as string | undefined
+
+    if (!resolvedName) {
+      const fallbackSearch = await fetchFinnhubSearch(fallbackQuery, apiKey)
+      if (fallbackSearch?.symbol) {
+        resolvedSymbol = fallbackSearch.symbol.toUpperCase()
+
+        if (resolvedSymbol !== symbol) {
+          const altProfileResponse = await fetch(
+            `https://finnhub.io/api/v1/stock/profile2?symbol=${resolvedSymbol}&token=${apiKey}`,
+            { next: { revalidate: 3600 } }
+          )
+          const altProfile = altProfileResponse.ok ? await altProfileResponse.json() : null
+          resolvedName = altProfile?.name || fallbackSearch.description || cached?.name
+
+          return {
+            symbol: resolvedSymbol,
+            name: resolvedName ?? resolvedSymbol,
+            description:
+              cached?.description ??
+              `${resolvedName ?? resolvedSymbol} operates in ${altProfile?.finnhubIndustry || 'its sector'} and is listed under ${resolvedSymbol}.`,
+            sector: altProfile?.finnhubIndustry || cached?.sector || 'Unknown',
+            industry: altProfile?.finnhubIndustry || cached?.industry || 'Unknown',
+            website: altProfile?.weburl || cached?.website || '#',
+            ceo: cached?.ceo,
+            founded: cached?.founded,
+            employees: cached?.employees,
+          }
+        }
+
+        resolvedName = resolvedName || fallbackSearch.description || cached?.name
+      }
     }
 
-    const profile = await profileResponse.json()
-
-    const name = profile?.name
-    const fallbackSearch = !name ? await fetchFinnhubSearch(symbol, apiKey) : null
-
-    const resolvedName = name || fallbackSearch?.description || cached?.name
     if (!resolvedName) {
       return cached ?? null
     }
 
     return {
-      symbol,
+      symbol: resolvedSymbol,
       name: resolvedName,
       description:
         cached?.description ??
-        `${resolvedName} operates in ${profile?.finnhubIndustry || 'its sector'} and is listed under ${symbol}.`,
+        `${resolvedName} operates in ${profile?.finnhubIndustry || 'its sector'} and is listed under ${resolvedSymbol}.`,
       sector: profile?.finnhubIndustry || cached?.sector || 'Unknown',
       industry: profile?.finnhubIndustry || cached?.industry || 'Unknown',
       website: profile?.weburl || cached?.website || '#',
@@ -91,10 +118,12 @@ export async function GET(
   { params }: { params: { symbol: string } }
 ) {
   try {
-    const symbol = (params.symbol as string).toUpperCase()
+    const rawInput = (params.symbol as string) || ''
+    const alias = resolveAlias(rawInput)
+    const symbol = (alias ?? rawInput).toUpperCase()
     const validateOnly = request.nextUrl.searchParams.get('validate') === '1'
 
-    const overview = await getCompanyOverview(symbol)
+    const overview = await getCompanyOverview(symbol, rawInput)
     if (!overview) {
       return NextResponse.json(
         { error: 'Company not found' },
@@ -107,12 +136,13 @@ export async function GET(
     }
 
     // Pull live market data, then fallback only if provider fails.
+    const resolvedSymbol = overview.symbol.toUpperCase()
     let marketData
     try {
-      marketData = await getMarketData(symbol)
+      marketData = await getMarketData(resolvedSymbol)
     } catch (error) {
-      console.warn(`Using mock market data for ${symbol}`)
-      marketData = getMockMarketData(symbol, overview.name)
+      console.warn(`Using mock market data for ${resolvedSymbol}`)
+      marketData = getMockMarketData(resolvedSymbol, overview.name)
     }
 
     // Recent news gives context for sentiment and summary generation.
@@ -195,7 +225,7 @@ export async function GET(
       positiveSignals >= 2 ? 'bullish' : positiveSignals === 1 ? 'neutral' : 'bearish'
 
     const brief: CompanyBrief = {
-      symbol,
+      symbol: resolvedSymbol,
       name: overview.name,
       overview,
       marketData,
