@@ -139,13 +139,30 @@ export async function GET(
     const resolvedSymbol = overview.symbol.toUpperCase()
     let marketData
     try {
-      marketData = await getMarketData(resolvedSymbol)
+      import { COMPANY_CATALOG, resolveAlias } from '@/lib/company-catalog'
     } catch (error) {
       console.warn(`Using mock market data for ${resolvedSymbol}`)
       marketData = getMockMarketData(resolvedSymbol, overview.name)
     }
 
     // Recent news gives context for sentiment and summary generation.
+      async function fetchProfile(symbol: string, apiKey: string) {
+        try {
+          const response = await fetch(
+            `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`,
+            { next: { revalidate: 3600 } }
+          )
+
+          if (!response.ok) {
+            return null
+          }
+
+          return await response.json()
+        } catch {
+          return null
+        }
+      }
+
     const news = await getNews(overview.name, 15)
 
     // Build AI summary blocks used by the brief UI.
@@ -167,49 +184,52 @@ export async function GET(
       )
       risks = analysisResult.risks
       opportunities = analysisResult.opportunities
-
-      // Keep factors deterministic so we can show something useful every time.
+      async function getCompanyOverview(input: string): Promise<{ symbol: string; overview: CompanyOverview } | null> {
+        const normalized = input.trim().toUpperCase()
+        const alias = resolveAlias(input)
+        const symbolFromAlias = alias ? alias.toUpperCase() : null
+        const cachedSymbol = symbolFromAlias ?? normalized
+        const cached = COMPANY_CATALOG[cachedSymbol]
       bullishFactors = [
         marketData.price > marketData.low52Week * 1.2
           ? 'Trading well above 52-week low'
-          : 'Building from support levels',
+          return cached ? { symbol: cachedSymbol, overview: cached } : null
         marketData.peRatio && marketData.peRatio < 25
           ? 'Reasonable valuation metrics'
           : 'Competitive market positioning',
-        marketData.volume > marketData.avgVolume * 0.8
-          ? 'Strong trading volume'
-          : 'Consistent market participation',
-      ]
+          let symbol = cachedSymbol
+          let profile = await fetchProfile(symbol, apiKey)
 
-      bearishFactors = [
-        marketData.changePercent < -5
-          ? 'Recent price decline'
-          : 'Market volatility concerns',
-        marketData.peRatio && marketData.peRatio > 30
-          ? 'Premium valuation'
-          : 'Competitive pressures',
-        news.some((n) => n.sentiment === 'negative')
-          ? 'Negative sentiment in recent news'
-          : 'Market concentration risks',
-      ]
-    } catch (error) {
-      console.warn('Error generating AI content, using fallbacks:', error)
-      aiSummary = `${overview.name} operates in the ${overview.sector} sector as a ${overview.industry} company. The company continues to play a significant role in its industry while navigating current market conditions.`
-      easyExplanation = `${overview.name} is a company in the ${overview.industry} field. Their main focus is on providing innovative solutions and services to customers worldwide.`
-      bullishFactors = ['Market position maintained', 'Industry participation', 'Operational continuity']
-      bearishFactors = ['Market competition', 'Economic sensitivity', 'Sector dynamics']
-      risks = [
-        {
-          title: 'Market Competition',
-          description: 'Intense competition in the sector',
-          severity: 'medium',
-        },
-      ]
-      opportunities = [
-        {
-          title: 'Market Growth',
+          if (!profile?.name) {
+            const searchMatch = await fetchFinnhubSearch(input, apiKey)
+            if (searchMatch?.symbol) {
+              symbol = searchMatch.symbol.toUpperCase()
+              profile = await fetchProfile(symbol, apiKey)
+            }
+          }
+
+          const resolvedName = profile?.name || cached?.name
+          if (!resolvedName) {
+            return cached ? { symbol: cachedSymbol, overview: cached } : null
+          }
+
+          const overview: CompanyOverview = {
+            symbol,
+            name: resolvedName,
+            description:
+              cached?.description ??
+              `${resolvedName} operates in ${profile?.finnhubIndustry || 'its sector'} and is listed under ${symbol}.`,
+            sector: profile?.finnhubIndustry || cached?.sector || 'Unknown',
+            industry: profile?.finnhubIndustry || cached?.industry || 'Unknown',
+            website: profile?.weburl || cached?.website || '#',
+            ceo: cached?.ceo,
+            founded: cached?.founded,
+            employees: cached?.employees,
+          }
+
+          return { symbol, overview }
           description: 'Potential for expansion in emerging markets',
-          potential: 'medium',
+          return cached ? { symbol: cachedSymbol, overview: cached } : null
         },
       ]
     }
@@ -218,16 +238,18 @@ export async function GET(
     const positiveSignals = [
       marketData.changePercent > 0,
       marketData.price > marketData.high52Week * 0.9,
-      bullishFactors.length > bearishFactors.length,
+          const requested = params.symbol as string
     ].filter(Boolean).length
 
-    const sentiment =
-      positiveSignals >= 2 ? 'bullish' : positiveSignals === 1 ? 'neutral' : 'bearish'
+          const resolved = await getCompanyOverview(requested)
+          if (!resolved) {
 
     const brief: CompanyBrief = {
       symbol: resolvedSymbol,
       name: overview.name,
       overview,
+
+          const { symbol, overview } = resolved
       marketData,
       sentiment,
       bullishFactors,
