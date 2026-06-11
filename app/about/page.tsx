@@ -15,7 +15,7 @@ export default function AboutPage() {
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-16">
         {/* Intro */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4">About The Product</h1>
+          <h1 className="text-5xl font-bold mb-4">About This Product</h1>
           <p className="text-xl text-muted-foreground">
             Designed to make company research clear, current, and faster to act on.
           </p>
@@ -28,7 +28,7 @@ export default function AboutPage() {
           </CardHeader>
           <CardContent className="space-y-4 prose prose-invert max-w-none">
             <p>
-              Vestial exists to democratize company intelligence. Whether you&apos;re a student learning about
+              The platform exists to democratize company intelligence. Whether you&apos;re a student learning about
               finance, an investor researching opportunities, or someone curious about companies, our platform
               removes barriers to understanding.
             </p>
