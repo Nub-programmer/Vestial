@@ -60,3 +60,5 @@ model ComparisonHistory {
 
   @@index([symbol1, symbol2])
 }
+
+
