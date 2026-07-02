@@ -1,3 +1,4 @@
+
 // Prisma models for cached company briefs, users, and watchlists.
 
 generator client {
