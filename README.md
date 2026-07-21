@@ -162,3 +162,4 @@ If Prisma schema changes, run `prisma db push` against your Neon database.
 
 Built by **Atharv**.
 Vestial is designed as a portfolio-ready, open-source style project focused on clean architecture, practical UX, and real API integrations.
+
