@@ -71,7 +71,7 @@ export default function ApiHealthPage() {
             {!isLoading && !health && (
               <p className="text-sm text-rose-300">Health check failed. Try refresh.</p>
             )}
-
+ 
             {!isLoading && health && (
               <div className="grid gap-3">
                 {Object.entries(health.services).map(([name, status]) => (
